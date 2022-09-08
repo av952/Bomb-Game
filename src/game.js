@@ -4,11 +4,14 @@ const game = canvas.getContext("2d");
 const texto = document.querySelector("#texto");
 const time = document.querySelector("#time");
 const recordParrafo = document.querySelector("#record-p");
+const btnReset  =document.querySelector('#reset')
 
 window.addEventListener("keyup", moveByKeys);
 
 window.addEventListener("load", setCamvasSize);
 window.addEventListener("resize", setCamvasSize);
+
+btnReset.addEventListener('click',reset)
 
 let canvasSize;
 let elementSize;
@@ -85,7 +88,6 @@ function startGame() {
       }
     });
   });
-  drawFire()
   flag = false;
   movePlayer();
 
@@ -109,6 +111,9 @@ function movePlayer() {
   if (giftCollision) {
     levelUp();
   }
+    /**
+   * collision con el enémigo
+   */
 
   const enemiCollision = enemiesPositions.find((el) => {
     const eneX = el.x == playerPosition.x;
@@ -117,21 +122,25 @@ function movePlayer() {
     return eneX && eneY;
   });
 
-  /**
-   * collision con el enémigo
-   */
-
   if (enemiCollision) {
-    //game.clearRect(0, 0, canvasSize, canvasSize);
-    drawFire()
+
+    const firePositions  = enemiesPositions
+
+    game.clearRect(0, 0, canvasSize, canvasSize);
+
+    firePositions.forEach((row,index)=>{
+
+      game.fillText(emojis['BOMB_COLLISION'],row.x,row.y)
+    })
+
+    setTimeout(drawFire,300)
   }
 
   game.fillText(emojis["PLAYER"], playerPosition.x, playerPosition.y);
 }
 
 function drawFire(){
-    console.log(8787);
-    game.fillText(emojis['BOMB_COLLISION'],playerPosition.x,playerPosition.y-elementSize)
+    console.log('fire');
     death();
 }
 
@@ -211,23 +220,20 @@ function death() {
 }
 
 function gameWin() {
+  clearInterval(timeInterval);
   enemiesPositions.splice(0, enemiesPositions.length);
   endGame();
 }
 
 function endGame() {
-  level += 1;
   flag = true;
-  clearInterval(timeInterval);
-
   game.fillStyle = 'green'
   game.fillRect(0,0,canvasSize,canvasSize)
   game.fillStyle = 'white'
   game.font = '50px serif';
-
   game.fillText('Fin del juego', canvasSize/4,canvasSize/4);
 
-  consultaDatos();
+  setLocalStorage()
 }
 
 function consultaDatos() {
@@ -239,9 +245,26 @@ function consultaDatos() {
 
   //Conultamos la información y la guardamos en una variable
   const record = JSON.parse(localStorage.getItem("records"));
+  /**
+   * Encontrar el elemento mas pequeño dentro del array
+   */
+  ordenado = record
+    .map((el) => parseInt(el))
+    .sort()
+    .slice(0, 1);
+
+  return ordenado;
+}
+
+function setLocalStorage(){
+
+  //Conultamos la información y la guardamos en una variable
+  const record = JSON.parse(localStorage.getItem("records"));
 
   //Podemos agregar elementos al array extraido
   record.push(timeplayer);
+
+  console.log('record',record);
 
   //Agregamos el array ya modificado a localStorage
   localStorage.setItem("records", JSON.stringify(record));
@@ -255,5 +278,17 @@ function consultaDatos() {
     .sort()
     .slice(0, 1);
 
-  return ordenado;
+}
+
+
+function reset(){
+  clearInterval(timeInterval)
+    live = 3;
+    level = 0;
+    timeStart = undefined;
+  playerPosition.x = undefined;
+  playerPosition.y = undefined;
+  enemiesPositions.splice(0, enemiesPositions.length);
+  flag = true;  
+  startGame();
 }
